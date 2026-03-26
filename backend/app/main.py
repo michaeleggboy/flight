@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import flights, optimize
+from app.routers import flights, optimize, watch
 
 app = FastAPI(
     title="FlightPath API",
@@ -23,6 +23,7 @@ app.add_middleware(
 # Routers
 app.include_router(flights.router)
 app.include_router(optimize.router)
+app.include_router(watch.router)
 
 
 @app.get("/")

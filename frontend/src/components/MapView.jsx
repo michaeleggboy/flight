@@ -653,7 +653,7 @@ export default function MapView({
         </div>
       )}
 
-      <div className="absolute bottom-4 left-4 z-10 text-[10px] text-white/45 max-w-[11rem] leading-snug text-left pointer-events-none">
+      <div className="absolute bottom-4 left-4 z-10 text-[10px] text-white/45 max-w-[11rem] leading-snug text-left md:left-auto md:right-4 md:text-right pointer-events-none">
         Drag · Scroll · Click airport: add/remove · Right-click: origin
       </div>
 

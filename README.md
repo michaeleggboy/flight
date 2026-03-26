@@ -4,13 +4,9 @@ A full-stack flight route optimizer that finds the best price-to-time tradeoff a
 
 ## Preview
 
-<p align="center">
-  <img src="docs/readme-preview.png" alt="FlightPath UI: dark globe map with flight arcs and trip builder panel" width="920" />
-</p>
 
-<p align="center">
-  <em>Representative UI mockup. Replace with a screen recording or GIF if you prefer—see <a href="#replacing-the-preview-media">Replacing the preview media</a>.</em>
-</p>
+
+*Representative UI mockup. Replace with a screen recording or GIF if you prefer—see [Replacing the preview media](#replacing-the-preview-media).*
 
 ## Architecture
 
@@ -24,17 +20,18 @@ A full-stack flight route optimizer that finds the best price-to-time tradeoff a
 ┌──────────────▼──────────────────────┐
 │         FastAPI Backend             │
 │  ┌─────────────────────────────┐    │
-│  │   Route Optimizer (TSP)      │    │
-│  │   - Brute force (≤8 cities)  │    │
-│  │   - Simulated annealing      │    │
+│  │   Route Optimizer (TSP)     │    │
+│  │   - Brute force (≤8 cities) │    │
+│  │   - Simulated annealing     │    │
 │  └─────────────┬───────────────┘    │
 │  ┌─────────────▼───────────────┐    │
-│  │   Flight Data Service        │    │
-│  │   - Amadeus API / mock data  │    │
+│  │   Flight Data Service       │    │
+│  │   - Amadeus API / mock data │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
-│  │   RL Price Watch (future)    │    │
-│  │   - Q-learning buy/wait      │    │
+│  │   RL Price Watch            │    │
+│  │   - Tabular Q (simulator)   │    │
+│  │   - POST /api/watch/*       │    │
 │  └─────────────────────────────┘    │
 └─────────────────────────────────────┘
 ```
@@ -45,7 +42,7 @@ A full-stack flight route optimizer that finds the best price-to-time tradeoff a
 - **Price-to-time tradeoff slider** — adjust α to prioritize cost vs speed
 - **Globe visualization** — great-circle arcs between cities, color-coded legs, airport markers
 - **Itinerary ranking** — top routes scored and compared
-- **RL price watch (planned)** — per-leg buy/wait recommendations
+- **RL price watch** — per-route tabular Q-learning on **simulated** price paths; `POST /api/watch/recommend` (buy/wait + confidence) and `POST /api/watch/train` to refresh Q-tables under `backend/data/q_tables/`. **Not** real market data—see response `disclaimer`.
 
 ## Tech Stack
 
@@ -66,6 +63,10 @@ pip install -r requirements.txt
 cp .env.example .env      # Add your API keys
 uvicorn app.main:app --reload --port 8000
 ```
+
+**Tests:** `PYTHONPATH=. pytest tests/ -v` from `backend/`.
+
+**Price watch (optional):** call `POST /api/watch/train` once (empty body trains a default hub subset), then `POST /api/watch/recommend` with `{ "origin": "BOS", "destination": "LHR", "date": "2026-07-15" }`.
 
 ### Frontend
 
@@ -106,14 +107,21 @@ flight/
 │   │   ├── config.py            # Settings & env vars
 │   │   ├── routers/
 │   │   │   ├── flights.py       # /api/flights endpoints
-│   │   │   └── optimize.py      # /api/optimize endpoints
+│   │   │   ├── optimize.py      # /api/optimize endpoints
+│   │   │   └── watch.py         # /api/watch/recommend, /train
 │   │   ├── services/
 │   │   │   ├── flight_service.py    # Amadeus API / mock data
 │   │   │   ├── optimizer.py         # TSP route optimizer
-│   │   │   └── scorer.py            # Price-time scoring
+│   │   │   ├── scorer.py            # Price-time scoring
+│   │   │   ├── price_simulator.py   # Simulated price paths (RL training)
+│   │   │   └── q_price_agent.py     # Tabular Q-learning buy/wait
 │   │   └── models/
 │   │       ├── flight.py        # Pydantic models
-│   │       └── itinerary.py     # Route/itinerary models
+│   │       ├── itinerary.py     # Route/itinerary models
+│   │       └── watch.py         # Watch request/response models
+│   ├── data/
+│   │   └── q_tables/            # Persisted Q matrices (JSON)
+│   ├── tests/                   # pytest
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/
@@ -166,8 +174,9 @@ For **YouTube or Loom**, use a normal markdown link or thumbnail image linking t
 
 ## Future Enhancements
 
-- [ ] RL-based price watch agent (Q-learning per leg)
-- [ ] Historical price chart per route
-- [ ] Airport alternatives (e.g., BOS vs PVD)
-- [ ] Layover quality scoring
-- [ ] User accounts & saved trips
+- RL-based price watch agent (Q-learning per leg, simulator-trained)
+- Historical price chart per route
+- Airport alternatives (e.g., BOS vs PVD)
+- Layover quality scoring
+- User accounts & saved trips
+

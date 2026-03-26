@@ -35,3 +35,6 @@ pnpm-debug.log*
 .vscode/
 *.swp
 *.swo
+
+# RL price watch: generated Q-tables (train via POST /api/watch/train)
+backend/data/q_tables/*.json

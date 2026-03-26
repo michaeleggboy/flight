@@ -139,8 +139,19 @@ export default function App() {
         </div>
       </header>
 
-      <div className="relative flex-1 min-h-0 w-full overflow-hidden">
-        <main className="absolute inset-0 z-0 min-h-0" aria-label="Route map">
+      <div
+        className={`relative flex-1 min-h-0 w-full overflow-hidden ${
+          tripPanelOpen ? 'md:flex md:flex-row md:gap-3 md:px-3 md:pt-3 md:min-h-0' : ''
+        }`}
+      >
+        <main
+          aria-label="Route map"
+          className={`z-0 min-h-0 absolute inset-0 ${
+            tripPanelOpen
+              ? 'md:relative md:inset-auto md:flex md:flex-col md:flex-1 md:min-w-0 md:min-h-0'
+              : ''
+          }`}
+        >
           <Suspense fallback={<MapLoadingFallback />}>
             <MapView
               edgeToEdge
@@ -155,7 +166,8 @@ export default function App() {
 
         <aside
           aria-label="Trip builder and route results"
-          className="pointer-events-none absolute z-40 top-3 right-3 sm:top-4 sm:right-4 flex flex-col items-end gap-2"
+          className={`pointer-events-none flex flex-col gap-2 absolute z-40 top-3 right-3 sm:top-4 sm:right-4 items-end
+            ${tripPanelOpen ? 'md:relative md:top-auto md:right-auto md:z-auto md:shrink-0 md:items-stretch md:self-stretch md:min-h-0' : ''}`}
         >
           {!tripPanelOpen && (
             <button
@@ -174,7 +186,7 @@ export default function App() {
             id="trip-side-panel"
             role="region"
             aria-labelledby="trip-side-panel-title"
-            className="pointer-events-auto flex w-[min(380px,calc(100vw-1.5rem))] max-h-[min(520px,calc(100dvh-5.25rem))] flex-col overflow-hidden rounded-2xl border border-white/12 bg-midnight/80 backdrop-blur-xl shadow-2xl shadow-black/60 ring-1 ring-white/5"
+            className="pointer-events-auto flex h-full min-h-0 w-[min(380px,calc(100vw-1.5rem))] max-h-[min(520px,calc(100dvh-5.25rem))] md:max-h-[calc(100dvh-5.25rem)] flex-col overflow-hidden rounded-2xl border border-white/12 bg-midnight/80 backdrop-blur-xl shadow-2xl shadow-black/60 ring-1 ring-white/5"
           >
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/8 px-4 py-3 sm:px-5">
               <h2
