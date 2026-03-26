@@ -1,0 +1,20 @@
+[
+  { "lat": 49, "lng": 12, "text": "Europe", "size": 0.42, "color": "rgba(148,163,184,0.45)" },
+  { "lat": 38, "lng": -96, "text": "N. America", "size": 0.42, "color": "rgba(148,163,184,0.45)" },
+  { "lat": -15, "lng": -60, "text": "S. America", "size": 0.4, "color": "rgba(148,163,184,0.4)" },
+  { "lat": 8, "lng": 20, "text": "Africa", "size": 0.44, "color": "rgba(148,163,184,0.45)" },
+  { "lat": 35, "lng": 95, "text": "Asia", "size": 0.46, "color": "rgba(148,163,184,0.45)" },
+  { "lat": -22, "lng": 135, "text": "Oceania", "size": 0.38, "color": "rgba(148,163,184,0.4)" },
+  { "lat": 40.7, "lng": -74, "text": "NYC", "size": 0.32, "color": "rgba(100,116,139,0.5)" },
+  { "lat": 51.5, "lng": -0.1, "text": "London", "size": 0.32, "color": "rgba(100,116,139,0.5)" },
+  { "lat": 48.9, "lng": 2.3, "text": "Paris", "size": 0.3, "color": "rgba(100,116,139,0.45)" },
+  { "lat": 35.7, "lng": 139.7, "text": "Tokyo", "size": 0.32, "color": "rgba(100,116,139,0.5)" },
+  { "lat": 1.3, "lng": 103.8, "text": "Singapore", "size": 0.28, "color": "rgba(100,116,139,0.45)" },
+  { "lat": 25.2, "lng": 55.3, "text": "Dubai", "size": 0.28, "color": "rgba(100,116,139,0.45)" },
+  { "lat": -33.9, "lng": 151.2, "text": "Sydney", "size": 0.3, "color": "rgba(100,116,139,0.45)" },
+  { "lat": 19.4, "lng": -99.1, "text": "Mexico City", "size": 0.3, "color": "rgba(100,116,139,0.45)" },
+  { "lat": -23.5, "lng": -46.6, "text": "São Paulo", "size": 0.3, "color": "rgba(100,116,139,0.45)" },
+  { "lat": 28.6, "lng": 77.2, "text": "Delhi", "size": 0.32, "color": "rgba(100,116,139,0.45)" },
+  { "lat": 31.2, "lng": 121.5, "text": "Shanghai", "size": 0.3, "color": "rgba(100,116,139,0.45)" },
+  { "lat": 37.6, "lng": -122.4, "text": "San Francisco", "size": 0.28, "color": "rgba(100,116,139,0.45)" }
+]
