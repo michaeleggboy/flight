@@ -1,4 +1,4 @@
-# FlightPath — Multi-City Flight Optimizer
+# ✈️ FlightPath — Multi-City Flight Optimizer
 
 A full-stack flight route optimizer that finds the best price-to-time tradeoff across multi-city itineraries, visualized on an interactive **3D globe** (great-circle routes, ranked results, and a floating trip builder panel).
 
