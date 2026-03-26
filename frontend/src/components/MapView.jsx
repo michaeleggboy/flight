@@ -6,10 +6,20 @@ import { legArcColor, interpolateAlongGlobeArcSameAsThreeGlobe } from '../utils/
 import { globeTokens } from '../theme/tokens';
 import macroGlobeLabels from '../data/macroGlobeLabels.json';
 
-// ─── Globe textures (free, no API key) ──────────────────────────────────────
+// ─── Globe textures (free, no API key) — photoreal surface per three-globe examples ──
 
-const GLOBE_IMAGE = '//unpkg.com/three-globe/example/img/earth-dark.jpg';
+const GLOBE_IMAGE = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 const BUMP_IMAGE = '//unpkg.com/three-globe/example/img/earth-topology.png';
+/** Same asset as [react-globe.gl clouds example](https://github.com/vasturiano/react-globe.gl/tree/master/example/clouds). */
+const CLOUDS_TEXTURE_URL =
+  'https://cdn.jsdelivr.net/gh/vasturiano/react-globe.gl@master/example/clouds/clouds.png';
+const CLOUDS_ALT = 0.004;
+const CLOUDS_ROTATION_DEG_PER_FRAME = -0.006;
+/** Star shell radius vs globe; camera stays well inside so stars read as sky around Earth. */
+const STARFIELD_RADIUS_MULT = 36;
+const STARFIELD_COUNT = 2400;
+const STARFIELD_POINT_SIZE = 2.15;
+const STARFIELD_OPACITY = 0.72;
 
 /** Slightly lower emissive so land polygons + texture read more clearly. */
 const LAND_POLYGON_ALTITUDE = 0.014;
@@ -121,13 +131,41 @@ function airportGlobeLabelHtml(d, tripType, planning) {
   `;
 }
 
-/** Midnight + cyan wash; globe.gl still applies the equirectangular map to this material. */
+/** Phong material tuned so Blue Marble stays vivid; map comes from `globeImageUrl` (see react-globe.gl). */
+/** Uniform distribution on a sphere (random direction). */
+function createStarfieldPoints(globeRadius) {
+  const r = globeRadius * STARFIELD_RADIUS_MULT;
+  const positions = new Float32Array(STARFIELD_COUNT * 3);
+  for (let i = 0; i < STARFIELD_COUNT; i++) {
+    const u = Math.random();
+    const v = Math.random();
+    const theta = 2 * Math.PI * u;
+    const phi = Math.acos(2 * v - 1);
+    const sinP = Math.sin(phi);
+    positions[i * 3] = r * sinP * Math.cos(theta);
+    positions[i * 3 + 1] = r * sinP * Math.sin(theta);
+    positions[i * 3 + 2] = r * Math.cos(phi);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({
+    color: new THREE.Color(globeTokens.starField),
+    size: STARFIELD_POINT_SIZE,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: STARFIELD_OPACITY,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  return new THREE.Points(geo, mat);
+}
+
 function createGlobeMaterial() {
   return new THREE.MeshPhongMaterial({
     color: globeTokens.meshColor,
     emissive: new THREE.Color(globeTokens.meshEmissive),
-    emissiveIntensity: 0.5,
-    shininess: 6,
+    emissiveIntensity: 0.12,
+    shininess: 12,
     specular: new THREE.Color(globeTokens.meshSpecular),
   });
 }
@@ -144,6 +182,11 @@ export default function MapView({
   const globeRef = useRef();
   const containerRef = useRef();
   const legMarkerElCacheRef = useRef(new Map());
+  const cloudsMeshRef = useRef(null);
+  const starfieldMeshRef = useRef(null);
+  const cloudsRafRef = useRef(null);
+  const reduceMotionRef = useRef(false);
+  const cloudsLoadGenRef = useRef(0);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [countriesFeatures, setCountriesFeatures] = useState([]);
   const [viewAltitude, setViewAltitude] = useState(DEFAULT_CAMERA_ALTITUDE);
@@ -160,6 +203,52 @@ export default function MapView({
     mq.addEventListener('change', fn);
     return () => mq.removeEventListener('change', fn);
   }, []);
+
+  useEffect(() => {
+    reduceMotionRef.current = reduceGlobeMotion;
+  }, [reduceGlobeMotion]);
+
+  function disposeGlobeCustomLayers() {
+    if (cloudsRafRef.current != null) {
+      cancelAnimationFrame(cloudsRafRef.current);
+      cloudsRafRef.current = null;
+    }
+    const globe = globeRef.current;
+
+    const clouds = cloudsMeshRef.current;
+    if (clouds) {
+      if (globe) {
+        try {
+          globe.scene().remove(clouds);
+        } catch {
+          /* scene may be torn down */
+        }
+      }
+      clouds.geometry?.dispose();
+      const cmat = clouds.material;
+      if (cmat) {
+        if (cmat.map) cmat.map.dispose();
+        cmat.dispose();
+      }
+    }
+    cloudsMeshRef.current = null;
+
+    const stars = starfieldMeshRef.current;
+    if (stars) {
+      if (globe) {
+        try {
+          globe.scene().remove(stars);
+        } catch {
+          /* scene may be torn down */
+        }
+      }
+      stars.geometry?.dispose();
+      stars.material?.dispose();
+    }
+    starfieldMeshRef.current = null;
+  }
+
+  useEffect(() => () => disposeGlobeCustomLayers(), []);
 
   // ─── Natural Earth countries (land vs water + hover labels) ──────────────
 
@@ -297,9 +386,58 @@ export default function MapView({
     const globe = globeRef.current;
     if (!globe) return;
     globe.lights([
-      new THREE.AmbientLight(globeTokens.ambientLight, Math.PI * 0.85),
-      new THREE.DirectionalLight(globeTokens.directionalLight, 0.5 * Math.PI),
+      new THREE.AmbientLight(globeTokens.ambientLight, Math.PI * 1.05),
+      new THREE.DirectionalLight(globeTokens.directionalLight, 0.92 * Math.PI),
     ]);
+
+    disposeGlobeCustomLayers();
+
+    const globeR = globe.getGlobeRadius();
+    const stars = createStarfieldPoints(globeR);
+    globe.scene().add(stars);
+    starfieldMeshRef.current = stars;
+
+    const loadGen = ++cloudsLoadGenRef.current;
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      CLOUDS_TEXTURE_URL,
+      (cloudsTexture) => {
+        if (loadGen !== cloudsLoadGenRef.current) {
+          cloudsTexture.dispose();
+          return;
+        }
+        const g = globeRef.current;
+        if (!g) {
+          cloudsTexture.dispose();
+          return;
+        }
+        const radius = g.getGlobeRadius() * (1 + CLOUDS_ALT);
+        const clouds = new THREE.Mesh(
+          new THREE.SphereGeometry(radius, 75, 75),
+          new THREE.MeshPhongMaterial({
+            map: cloudsTexture,
+            transparent: true,
+            opacity: 0.36,
+            depthWrite: false,
+          })
+        );
+        g.scene().add(clouds);
+        cloudsMeshRef.current = clouds;
+
+        const rotateClouds = () => {
+          const mesh = cloudsMeshRef.current;
+          if (mesh && !reduceMotionRef.current) {
+            mesh.rotation.y += (CLOUDS_ROTATION_DEG_PER_FRAME * Math.PI) / 180;
+          }
+          cloudsRafRef.current = requestAnimationFrame(rotateClouds);
+        };
+        cloudsRafRef.current = requestAnimationFrame(rotateClouds);
+      },
+      undefined,
+      () => {
+        /* texture failed (offline / CORS); globe still works */
+      }
+    );
   }, []);
 
   // ─── Points: full airport network + trip selection (planning or itinerary) ─
@@ -327,13 +465,13 @@ export default function MapView({
           stopIndex: inTrip ? idx + 1 : null,
           isOrigin: inTrip && idx === 0,
           roleLabel,
-          size: inTrip ? (idx === 0 ? 0.72 : 0.52) : 0.3,
+          size: inTrip ? (idx === 0 ? 0.86 : 0.62) : 0.44,
           color: inTrip
             ? idx === 0
               ? globeTokens.pointOrigin
-              : globeTokens.pointOther
-            : 'rgba(160, 220, 255, 0.78)',
-          alt: inTrip ? POINT_ALTITUDE + (idx === 0 ? 0.006 : 0.002) : POINT_ALTITUDE - 0.003,
+              : globeTokens.pointStop
+            : globeTokens.pointPool,
+          alt: inTrip ? POINT_ALTITUDE + (idx === 0 ? 0.006 : 0.002) : POINT_ALTITUDE - 0.002,
         };
       });
   }, [airports, selectedCities, selectedItinerary, tripType]);

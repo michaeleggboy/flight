@@ -44,7 +44,7 @@ A full-stack flight route optimizer that finds the best price-to-time tradeoff a
 
 - **Multi-city route optimization** — round trip, multi-city, or flexible ordering
 - **Price-to-time tradeoff slider** — adjust α to prioritize cost vs speed
-- **Globe visualization** — great-circle arcs between cities, color-coded legs, airport markers
+- **Globe visualization** — photoreal **Blue Marble** surface ([react-globe.gl](https://github.com/vasturiano/react-globe.gl) layers: arcs, points, labels, rings, polygons, HTML markers; see [Globe visualization](#globe-visualization-react-globegl) below)
 - **Itinerary ranking** — top routes scored and compared
 - **RL price watch** — per-route tabular Q-learning on **simulated** price paths; `POST /api/watch/recommend` (buy/wait + confidence) and `POST /api/watch/train` to refresh Q-tables under `backend/data/q_tables/`. **Not** real market data—see response `disclaimer`.
 
@@ -54,6 +54,37 @@ A full-stack flight route optimizer that finds the best price-to-time tradeoff a
 - **Backend**: Python 3.11+, FastAPI, Pydantic
 - **Optimizer**: itertools (exact), simulated annealing (heuristic)
 - **Flight data**: Amadeus API or in-process mock flights (`USE_MOCK_DATA`)
+
+## Globe visualization (react-globe.gl)
+
+The map is implemented in [`frontend/src/components/MapView.jsx`](frontend/src/components/MapView.jsx) with **[react-globe.gl](https://github.com/vasturiano/react-globe.gl)** (Three.js / WebGL). Prop and layer names match the **[official API reference](https://github.com/vasturiano/react-globe.gl?tab=readme-ov-file)**.
+
+### Globe surface and scene
+
+| Concept | react-globe.gl props | This project |
+|--------|----------------------|--------------|
+| Equirectangular texture | `globeImageUrl`, `bumpImageUrl` | [Blue Marble](https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg) + topology bump (three-globe examples) |
+| Custom shading | `globeMaterial` | `MeshPhongMaterial` — colors in [`frontend/src/theme/tokens.js`](frontend/src/theme/tokens.js) (`globeTokens`) tuned for a bright satellite base |
+| Atmosphere halo | `showAtmosphere` (default on), `atmosphereColor`, `atmosphereAltitude` | Soft sky-blue rim; altitude `0.18`. A custom **starfield** (Three.js `Points` on a distant sphere) sits in the same scene for depth around the globe — see below. |
+| Lat/lng grid | `showGraticules` | Enabled |
+| Lights | `onGlobeReady` → `globe.lights([...])` | Ambient + directional “daylight” (see `globeTokens`) |
+
+### Data layers (same names as the library docs)
+
+| Layer | Key props | How we use it |
+|-------|-----------|----------------|
+| **Polygons** | `polygonsData`, `polygonGeoJsonGeometry`, `polygonCapColor`, `polygonSideColor`, `polygonStrokeColor`, `polygonAltitude` | [Natural Earth](https://www.naturalearthdata.com/) 110m countries (`public/geo/ne_110m_admin_0_countries.geojson`) for land/coast context over the photoreal globe |
+| **Points** | `pointsData`, `pointLat`, `pointLng`, `pointAltitude`, `pointRadius`, `pointColor`, `pointLabel`, `onPointClick`, … | Full airport network as **warm red** dots (`globeTokens.pointPool`); **cyan** origin and **amber** other stops on the active trip; slightly larger radii so markers read over Blue Marble. Tooltips and click/right-click to build the route |
+| **Labels** | `labelsData`, `labelLat`, `labelLng`, `labelText`, `labelColor`, `labelSize`, `labelAltitude`, … | Macro regions / cities from [`macroGlobeLabels.json`](frontend/src/data/macroGlobeLabels.json) (hidden when zoomed in via `onZoom`) plus route labels `1·IATA`, … |
+| **Arcs** | `arcsData`, `arcStartLat`/`Lng`/`Altitude`, `arcEnd*`, `arcColor`, `arcStroke`, `arcDashLength`, `arcDashGap`, `arcDashAnimateTime`, `arcAltitudeAutoScale`, … | Great-circle **itinerary legs** (score- and leg-order-colored) or **draft** segments between picked cities |
+| **Rings** | `ringsData`, `ringLat`, `ringLng`, `ringAltitude`, `ringMaxRadius`, `ringPropagationSpeed`, `ringRepeatPeriod`, `ringColor` | Ripple pulses at each **route** airport (stronger on origin) |
+| **HTML elements** | `htmlElementsData`, `htmlLat`, `htmlLng`, `htmlAltitude`, `htmlElement` | Small **leg index** badges (1, 2, …) positioned along arcs |
+
+### Custom Three.js (not a react-globe prop)
+
+Following the **[Clouds example](https://github.com/vasturiano/react-globe.gl/tree/master/example/clouds)** in the same repo, a slightly larger **cloud sphere** (`TextureLoader` + `requestAnimationFrame` rotation) is added in `onGlobeReady`. It respects **`prefers-reduced-motion`**.
+
+A **starfield** is added the same way: thousands of `THREE.Points` on a large-radius shell (`createStarfieldPoints` in `MapView.jsx`), additive blending, color from `globeTokens.starField`, so stars read as sky around Earth outside the library’s atmosphere mesh.
 
 ## Quick Start
 
@@ -133,7 +164,7 @@ flight/
 │   │   ├── App.jsx              # Root layout & trip panel
 │   │   ├── main.jsx             # Entry point
 │   │   ├── components/
-│   │   │   ├── MapView.jsx      # 3D globe, arcs, airports
+│   │   │   ├── MapView.jsx      # react-globe.gl: Blue Marble, arcs, labels, rings, …
 │   │   │   ├── CitySearch.jsx   # Autocomplete city input
 │   │   │   ├── ItineraryPanel.jsx   # Route results
 │   │   │   ├── TradeoffSlider.jsx   # α slider
