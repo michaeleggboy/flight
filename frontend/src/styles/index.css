@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  button:focus-visible,
+  a:focus-visible,
+  input:not([type='range']):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-accent-cyan/45 ring-offset-2 ring-offset-midnight;
+  }
+
+  input[type='range']:focus-visible {
+    @apply outline-none;
+  }
+
+  input[type='range']:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--color-midnight), 0 0 0 4px rgba(0, 212, 255, 0.55);
+  }
+
+  input[type='range']:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--color-midnight), 0 0 0 4px rgba(0, 212, 255, 0.55);
+  }
+}
+
+:root {
+  --color-midnight: #0a0e1a;
+  --color-slate-850: #141926;
+  --color-slate-750: #1e2436;
+  --color-cyan: #00d4ff;
+  --color-magenta: #ff3d8a;
+  --color-amber: #ffb020;
+  --color-emerald: #00e5a0;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-750) transparent;
+}
+
+html {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+body {
+  background: var(--color-midnight);
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Glass morphism — tints align with theme/tokens.js midnight + accent cyan */
+.glass {
+  background: color-mix(in srgb, var(--color-slate-850) 78%, transparent);
+  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, white 6%, transparent);
+}
+
+.glass-hover:hover {
+  background: color-mix(in srgb, var(--color-slate-750) 82%, transparent);
+  border-color: color-mix(in srgb, var(--color-cyan) 18%, transparent);
+}
+
+/* Glow effects */
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05);
+}
+
+.glow-magenta {
+  box-shadow: 0 0 20px rgba(255, 61, 138, 0.15), 0 0 60px rgba(255, 61, 138, 0.05);
+}
+
+/* Map container */
+.map-container {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, white 6%, transparent);
+}
+
+/* Slider track */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type='range']::-webkit-slider-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-magenta));
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: white;
+  margin-top: -7px;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+}
+
+input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-magenta));
+}
+
+input[type='range']::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+}
+
+/* Stagger animation helper */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-1,
+  .stagger-2,
+  .stagger-3,
+  .stagger-4,
+  .stagger-5 {
+    animation-delay: 0s;
+  }
+}
+
+/* Country hover tooltip (globe.gl float-tooltip wrapper lives inside .globe-viz-host) */
+.globe-viz-host .float-tooltip-kap {
+  max-width: min(288px, 72vw);
+  padding: 0;
+  border-radius: 10px;
+  font: 12px/1.45 system-ui, -apple-system, sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(10, 14, 26, 0.94);
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.globe-country-tooltip {
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.globe-country-tooltip__name {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.96);
+  line-height: 1.25;
+}
+
+.globe-country-tooltip__meta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: 0.01em;
+}
+
+.globe-country-tooltip__pop {
+  margin-top: 6px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(0, 212, 255, 0.75);
+}
+
+.globe-airport-tooltip__city {
+  font-weight: 500;
+  opacity: 0.72;
+}
+
+.globe-airport-tooltip__hint {
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.globe-airport-tooltip__hint.subtle {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+/* Globe leg-index badges (MapView). Root: no `transform` — CSS2DRenderer owns it. */
+.globe-leg-marker {
+  pointer-events: none;
+}
+
+.globe-leg-marker__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  font: 700 0.8125rem/1 ui-sans-serif, system-ui, sans-serif;
+  color: #0a0e1a;
+  background: rgba(0, 212, 255, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(0, 212, 255, 0.45),
+    0 0 14px rgba(0, 212, 255, 0.4);
+  animation: globe-leg-marker-hover 1.9s ease-in-out infinite;
+}
+
+@keyframes globe-leg-marker-hover {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .globe-leg-marker__inner {
+    animation: none;
+  }
+}
