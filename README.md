@@ -1,0 +1,135 @@
+# ✈️ FlightPath — Multi-City Flight Optimizer
+
+A full-stack flight route optimizer that finds the best price-to-time tradeoff across multi-city itineraries, visualized on an interactive Google Map.
+
+## Architecture
+
+```
+┌─────────────────────────────────────┐
+│          React Frontend             │
+│  3D Globe + Itinerary Panel         │
+│  α slider (price ↔ time tradeoff)   │
+└──────────────┬──────────────────────┘
+               │ REST API
+┌──────────────▼──────────────────────┐
+│         FastAPI Backend             │
+│  ┌─────────────────────────────┐    │
+│  │   Route Optimizer (TSP)     │    │
+│  │   - Brute force (≤8 cities) │    │
+│  │   - Simulated annealing     │    │
+│  └─────────────┬───────────────┘    │
+│  ┌─────────────▼───────────────┐    │
+│  │   Flight Data Service       │    │
+│  │   - Amadeus API / mock data │    │
+│  └─────────────────────────────┘    │
+│  ┌─────────────────────────────┐    │
+│  │   RL Price Watch (future)   │    │
+│  │   - Q-learning buy/wait     │    │
+│  └─────────────────────────────┘    │
+└─────────────────────────────────────┘
+```
+
+## Features
+
+- **Multi-city route optimization** — round trip, multi-city, or flexible ordering
+- **Price-to-time tradeoff slider** — adjust α to prioritize cost vs speed
+- **Google Maps visualization** — great-circle arcs between cities, color-coded by cost
+- **Itinerary ranking** — top routes scored and compared
+- **RL price watch (planned)** — per-leg buy/wait recommendations
+
+## Tech Stack
+
+- **Frontend**: React 18, Tailwind CSS, Framer Motion
+- **Backend**: Python 3.11+, FastAPI, Pydantic
+- **Optimizer**: itertools (exact), simulated annealing (heuristic)
+- **Flight Data**: Amadeus API (or mock data for development)
+
+## Quick Start
+
+### Backend
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env      # Add your API keys
+uvicorn app.main:app --reload --port 8000
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+## Environment Variables
+
+### Backend `.env`
+```
+AMADEUS_API_KEY=your_key
+AMADEUS_API_SECRET=your_secret
+USE_MOCK_DATA=true          # Set false to use real Amadeus API
+```
+
+### Frontend `.env`
+```
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+## Project Structure
+
+```
+flight-optimizer/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI app entry
+│   │   ├── config.py            # Settings & env vars
+│   │   ├── routers/
+│   │   │   ├── flights.py       # /api/flights endpoints
+│   │   │   └── optimize.py      # /api/optimize endpoints
+│   │   ├── services/
+│   │   │   ├── flight_service.py    # Amadeus API / mock data
+│   │   │   ├── optimizer.py         # TSP route optimizer
+│   │   │   └── scorer.py            # Price-time scoring
+│   │   └── models/
+│   │       ├── flight.py        # Pydantic models
+│   │       └── itinerary.py     # Route/itinerary models
+│   ├── data/
+│   │   └── mock_flights.json    # Mock flight data
+│   ├── requirements.txt
+│   └── .env.example
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx              # Root component
+│   │   ├── main.jsx             # Entry point
+│   │   ├── components/
+│   │   │   ├── MapView.jsx      # 3D with arcs
+│   │   │   ├── CitySearch.jsx   # Autocomplete city input
+│   │   │   ├── ItineraryPanel.jsx   # Route results
+│   │   │   ├── TradeoffSlider.jsx   # α slider
+│   │   │   └── FlightCard.jsx       # Per-leg flight info
+│   │   ├── hooks/
+│   │   │   └── useOptimizer.js  # API hook
+│   │   ├── utils/
+│   │   │   └── geo.js           # Great-circle math
+│   │   └── styles/
+│   │       └── index.css        # Global styles
+│   ├── public/
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   └── .env.example
+└── README.md
+```
+
+## Future Enhancements
+
+- [ ] RL-based price watch agent (Q-learning per leg)
+- [ ] Historical price chart per route
+- [ ] Airport alternatives (e.g., BOS vs PVD)
+- [ ] Layover quality scoring
+- [ ] User accounts & saved trips
