@@ -4,9 +4,13 @@ A full-stack flight route optimizer that finds the best price-to-time tradeoff a
 
 ## Preview
 
+<p align="center">
+  <img src="docs/readme-preview.png" alt="FlightPath UI: 3D globe with flight arcs and trip builder panel" width="920" />
+</p>
 
-
-*Representative UI mockup. Replace with a screen recording or GIF if you prefer—see [Replacing the preview media](#replacing-the-preview-media).*
+<p align="center">
+  <em>Representative UI mockup. Replace with a screen recording or GIF if you prefer—see <a href="#replacing-the-preview-media">Replacing the preview media</a>.</em>
+</p>
 
 ## Architecture
 
